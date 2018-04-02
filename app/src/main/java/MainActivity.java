@@ -1,7 +1,8 @@
 package io.github.dannybritto96.youtubemp3;
 
 
-import android.media.AudioManager;
+import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Handler;
@@ -12,10 +13,10 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-
+import android.widget.ProgressBar;
+import android.widget.SeekBar;
 import android.widget.Toast;
 
-import com.google.android.gms.ads.internal.gmsg.HttpClient;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -25,25 +26,29 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
-import org.w3c.dom.Entity;
 
-import java.io.IOException;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
+
 public class MainActivity extends AppCompatActivity {
-    private Button btn;
     protected Button pauseBtn;
-    protected Button playBtn;
+    protected Button btn;
+    public Button playBtn;
     protected String youtube_id;
     protected String filename;
     public String audio_url;
-    private MediaPlayer player;
+    protected MediaPlayer mplayer = null;
     protected Uri audio_uri;
+    int drawable_pause = R.drawable.ic_pause;
+    int drawable_play = R.drawable.ic_play;
+    protected ProgressBar spinner;
+    public EditText text;
+    public SeekBar seek_bar;
+    Handler seekHandler = new Handler();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,70 +56,137 @@ public class MainActivity extends AppCompatActivity {
         btn = findViewById(R.id.audioStreamBtn);
         pauseBtn = findViewById(R.id.button3);
         playBtn = findViewById(R.id.button2);
+        spinner = findViewById(R.id.progressBar1);
+        seek_bar = findViewById(R.id.seekBar);
+        playBtn.setEnabled(false);
+        pauseBtn.setEnabled(false);
+        try{
+            text = findViewById(R.id.youtube_url);
+        } catch (Exception e){
+            Log.e("Exception",Log.getStackTraceString(e));
+        }
+        try{
+            Bundle extras = getIntent().getExtras();
+            String value1 = (String) extras.get(Intent.EXTRA_TEXT);
+            text.setText(value1);
+        } catch (Exception e){
+            Log.e("Exception",Log.getStackTraceString(e));
+
+        }
+
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                EditText text = (EditText)findViewById(R.id.youtube_url);
                 String urlString = text.getText().toString();
                 String pattern = "(?<=watch\\?v=|/videos/|embed\\/|youtu.be\\/|\\/v\\/|\\/e\\/|watch\\?v%3D|watch\\?feature=player_embedded&v=|%2Fvideos%2F|embed%\u200C\u200B2F|youtu.be%2F|%2Fv%2F)[^#\\&\\?\\n]*";
                 Pattern compiledPattern = Pattern.compile(pattern);
                 Matcher matcher = compiledPattern.matcher(urlString);
                 if (matcher.find()) {
+                    spinner.setVisibility(View.VISIBLE);
                     youtube_id = matcher.group();
-                    filename = youtube_id+".mp3";
-                    audio_url = "http://35.229.150.101/mp3-"+youtube_id+".mp3";
+                    filename = youtube_id + ".mp3";
+                    audio_url = "http://35.229.150.101/mp3-" + youtube_id + ".mp3";
                     new PostDataAsyncTask().execute();
-                    Toast.makeText(MainActivity.this, "Please Wait..", Toast.LENGTH_LONG).show();
-                    Log.d("Audio_URL",""+audio_url);
+                    Log.d("Audio_URL", "" + audio_url);
                     audio_uri = Uri.parse(audio_url);
                     final Handler handler = new Handler();
                     handler.postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                            Toast.makeText(MainActivity.this,"Loading, Please Wait...",Toast.LENGTH_LONG).show();
+                            Toast.makeText(MainActivity.this, "Please Wait...", Toast.LENGTH_LONG).show();
+                            playBtn.setEnabled(true);
+                            pauseBtn.setEnabled(true);
                         }
-                    },6000);
-                }
-                else{
-                    Toast.makeText(MainActivity.this,"Invalid URL",Toast.LENGTH_LONG).show();
-                    text.setText("");
+                    }, 3000);
+
+                } else {
+                    Toast.makeText(MainActivity.this, "Invalid URL", Toast.LENGTH_LONG).show();
                 }
 
 
             }
         });
+
 
         playBtn.setOnClickListener(new View.OnClickListener() {
+            boolean mStartPlaying = true;
+
             @Override
             public void onClick(View view) {
-                BackgroundSound mBackgroundSound = new BackgroundSound();
-                mBackgroundSound.execute();
+                startPlaying();
+                mStartPlaying = !mStartPlaying;
+            }
+        });
+        pauseBtn.setOnClickListener(new View.OnClickListener() {
+            boolean mStartPlaying = true;
+
+            @Override
+            public void onClick(View view) {
+                stopPlaying();
+                text.setText("");
+                playBtn.setText(R.string.play);
+                playBtn.setCompoundDrawablesWithIntrinsicBounds(drawable_play,0,0,0);
             }
         });
 
-        pauseBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(player!=null){
-                    player.pause();
-                }
-            }
-        });
     }
-    public class BackgroundSound extends AsyncTask<String, String, String>{
+
+    Runnable run = new Runnable() {
         @Override
-        protected String doInBackground(String... strings){
-            player = MediaPlayer.create(MainActivity.this,audio_uri);
-            AudioManager audioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
-            float actualVolume = (float)audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-            float maxVolume = (float)audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-            float volume = actualVolume;
-            player.setLooping(false);
-            player.setVolume(volume,volume);
-            player.start();
-            return null;
+        public void run() {
+            seekUpdation();
         }
+    };
+    public void seekUpdation(){
+        seek_bar.setProgress(mplayer.getCurrentPosition());
+        seekHandler.postDelayed(run,1000);
     }
+
+    @SuppressLint("SetTextI18n")
+    private void startPlaying(){
+        if(mplayer != null && mplayer.isPlaying()){
+            mplayer.pause();
+            playBtn.setText(R.string.play);
+            playBtn.setCompoundDrawablesWithIntrinsicBounds(drawable_play,0,0,0);
+        }else if(mplayer != null){
+            mplayer.start();
+            playBtn.setText(R.string.pause);
+            playBtn.setCompoundDrawablesWithIntrinsicBounds(drawable_pause,0,0,0);
+
+        }else{
+            mplayer = new MediaPlayer();
+            btn.setEnabled(false);
+            try{
+                mplayer.setDataSource(audio_url);
+                mplayer.prepare();
+                seek_bar.setMax(mplayer.getDuration());
+                mplayer.start();
+                seekUpdation();
+                playBtn.setText(R.string.pause);
+                playBtn.setCompoundDrawablesWithIntrinsicBounds(drawable_pause,0,0,0);
+            }catch (Exception e){
+                Log.e("Exception",Log.getStackTraceString(e));
+            }
+        }
+
+
+    }
+
+    private void stopPlaying(){
+        mplayer.release();
+        mplayer = null;
+        btn.setEnabled(true);
+
+    }
+
+
+    /*public void sendNotification(){
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this,"1").setSmallIcon(R.drawable.ic_music).setContentTitle("Youtube MP3").setContentText("Ready to Play");
+        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.createNotificationChannel(channel_1);
+        mNotificationManager.notify(1,mBuilder.build());
+    }*/
+
     public class PostDataAsyncTask extends AsyncTask<String, String, String> {
 
 
@@ -136,6 +208,8 @@ public class MainActivity extends AppCompatActivity {
                     if (resEntity != null) {
                         String responseStr = EntityUtils.toString(resEntity).trim();
                         Log.v("Response: ",""+responseStr);
+
+
                     }
                 }
                 catch(Exception e){
@@ -151,11 +225,13 @@ public class MainActivity extends AppCompatActivity {
             }
             return null;
         }
-
+        @Override
+        protected void onProgressUpdate(String... text){
+        }
         @Override
         protected void onPostExecute(String lengthOfFile) {
-            // do stuff after posting data
-
+            spinner.setVisibility(View.GONE);
+            //sendNotification();
         }
 
     }
