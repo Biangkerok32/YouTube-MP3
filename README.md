@@ -8,3 +8,5 @@ This is not completely optmised. Application does a lot of activity on Main Thre
 In the coming days I'll setup controls in the notification bar.
 
 Have hosted the backend FLASK server on a server with very less specifications. Lengthy audio files will take time to load.
+
+Download APK - https://drive.google.com/open?id=1aS7ragxFrPamUUNyiZ5Dhh6MspomG6UB
