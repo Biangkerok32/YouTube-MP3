@@ -9,4 +9,4 @@ In the coming days I'll setup controls in the notification bar.
 
 Have hosted the backend FLASK server on a server with very less specifications. Lengthy audio files will take time to load.
 
-Download APK - https://drive.google.com/open?id=1aS7ragxFrPamUUNyiZ5Dhh6MspomG6UB
+<a href="https://drive.google.com/open?id=1aS7ragxFrPamUUNyiZ5Dhh6MspomG6UB">Download APK</a>
