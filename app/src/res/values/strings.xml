@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">YouTube MP3</string>
+    <string name="paste_youtube_url">Paste YouTube URL</string>
+    <string name="start">Start Streaming</string>
+    <string name="parse">Parse</string>
+    <string name="play">Play</string>
+    <string name="pause">Pause</string>
+</resources>
