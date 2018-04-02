@@ -127,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
                     spinner.setVisibility(View.VISIBLE);
                     youtube_id = matcher.group();
                     filename = youtube_id + ".mp3";
-                    audio_url = "http://35.229.150.101/mp3-" + youtube_id + ".mp3";
+                    audio_url = "http://XX.XXX.XXX.XX/mp3-" + youtube_id + ".mp3";
                     new PostDataAsyncTask().execute();
                     Log.d("Audio_URL", "" + audio_url);
                     image_url = "https://img.youtube.com/vi"+youtube_id+"/maxresdefault.jpg";
@@ -326,7 +326,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(String... strings) {
             try {
-                String url = "http://35.229.150.101:5000/hello";
+                String url = "http://XX.XX.XXX.XX:5000/hello";
                 Log.d("URL",""+url);
                 Log.d("ID",""+youtube_id);
                 org.apache.http.client.HttpClient httpClient = new DefaultHttpClient();
