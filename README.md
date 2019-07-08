@@ -3,10 +3,7 @@ An Android application which streams audio of the given YouTube URL.
 
 #### Minimum SDK Version- 23
 
-This is not completely optmised. Application does a lot of activity on Main Thread. I will work on pushing MediaPlayer functions to a service or another AsyncTask.
+![alt Screenshot-1](https://raw.githubuserconent/dannybritto96/YouTube-MP3/master/img1.jpg)
 
-In the coming days I'll setup controls in the notification bar.
+![alt Screenshot-2](https://raw.githubusercontent/dannybritto96/YouTube-MP3/master/img2.jpg)
 
-Have hosted the backend FLASK server on a server with very less specifications. Lengthy audio files will take time to load.
-
-<a href="https://drive.google.com/open?id=1aS7ragxFrPamUUNyiZ5Dhh6MspomG6UB">Download APK</a>
